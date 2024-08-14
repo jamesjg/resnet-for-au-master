@@ -220,3 +220,92 @@ class AuDataset(Dataset):
     #             count += 1
     #             #print(i)
     #     return count, len(self.path_and_name)
+
+
+class AuRafDataset(Dataset):
+    def __init__(self, data_path, bbox_txt_path, transform=None):  # data_path: train/test
+        super(AuRafDataset, self).__init__()
+        with open(bbox_txt_path, 'r') as f:
+            self.data_infos = f.readlines()[2:]
+        self.data_infos = [i.strip() for i in self.data_infos]
+        self.img_paths = []
+        self.img_names = []
+        self.bbox_infos = []
+
+        for data_info in self.data_infos:
+            img_name = data_info.split(' ')[0]
+            x, y, w, h = map(float, data_info.split(' ')[1:])
+            assert os.path.exists(os.path.join(data_path, img_name)), 'img not exist'
+        
+            self.img_paths.append(os.path.join(data_path, img_name))
+            self.bbox_infos.append(np.array([x, y, w, h]))
+            self.img_names.append(img_name)
+        
+        #print(self.img_names)
+        self.transform = transform
+
+        
+    def __getitem__(self, idx):
+
+        #get image
+        img_path = self.img_paths[idx]
+        img_name = self.img_names[idx]
+        img = cv2.cvtColor(cv2.imread(img_path),cv2.COLOR_BGR2RGB)
+        #img = Image.open(img_path).convert('RGB')
+
+
+        
+        # get bbox
+        bbox = self.bbox_infos[idx]
+        # crop image
+        img = self.get_crop_img_from_bbox(bbox, img)
+        #img = torch.from_numpy(img).permute(2, 0, 1)
+        if self.transform:
+            img = Image.fromarray(img)
+            img= self.transform(img)
+
+        return img
+                 
+    def __len__(self):
+        return len(self.img_paths)
+    
+    def get_crop_img_from_bbox(self, bbox, img):
+        X1, Y1, w, h = bbox.astype(np.float32)
+        #X1, Y1, X2, Y2, score = map(int, bbox)
+        x1 = X1     
+        y1 = Y1
+        x2 = X1 + w
+        y2 = Y1 + h
+        h_origin, w_origin = img.shape[:2]
+        #中心点
+        center_x = (x2 + x1) / 2
+        center_y = (y2 + y1) / 2
+        h= y2-y1
+        w= x2-x1
+        length = max(h, w)
+        square_x1 = int(center_x - length / 2)
+        square_y1 = int(center_y - length / 2)
+        square_x2 = int(center_x + length / 2)
+        square_y2 = int(center_y + length / 2)
+        #防止越界
+        top_pad = max(0, -square_y1)
+        left_pad = max(0, -square_x1)
+        bottom_pad = max(0, square_y2 - h_origin)
+        right_pad = max(0, square_x2 - w_origin) 
+        #更新正方形顶点           
+        square_x1 = max(0, square_x1)
+        square_y1 = max(0, square_y1)
+        square_x2 = min(w_origin, square_x2)
+        square_y2 = min(h_origin, square_y2)
+
+        cropped_img = img[int(square_y1):int(square_y2), int(square_x1):int(square_x2)]
+        
+        # 在必要的地方添加填充
+        result_img = cv2.copyMakeBorder(
+            cropped_img,
+            top_pad, bottom_pad, left_pad, right_pad,
+            borderType=cv2.BORDER_CONSTANT,
+            value=(0, 0, 0)  # 黑色填充
+        )
+        
+        return result_img

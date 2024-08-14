@@ -4,6 +4,7 @@ import time
 def create_logger(log_dir, model_name, phase="train"):
     time_str = time.strftime('%Y-%m-%d-%H-%M')
     log_file = '{}_{}_{}.log'.format(model_name, time_str, phase)
+    os.makedirs(log_dir, exist_ok=True)
     logging.basicConfig(filename=os.path.join(log_dir, log_file+'.txt'), format=' %(message)s')
     logger = logging.getLogger("")
     logger.setLevel(logging.INFO)
