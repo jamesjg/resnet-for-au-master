@@ -191,56 +191,8 @@ class AuDataset(Dataset):
         img_path = self.img_paths[idx]
         #img = cv2.cvtColor(cv2.imread(img_path),cv2.COLOR_BGR2RGB)
         img = Image.open(img_path).convert('RGB')
-        #利用特征点检测器处理得到特征点
-        # if not self.iscrop:
-        #     landmark_helper = Landmark_helper(Method_type='dlib')
-        #     landmark, flag = landmark_helper.detect_facelandmark(img)
-        #     #如果检测到人脸
-        #     if flag:
-        #         assert(landmark.shape==(68,2)),'landmark shape is wrong {:}'.format(landmark.shape)
-        #         img, new_landmarks=self.face_aligner.align(img, landmark)
-        # if self.detect_face :
-        #     box_dir = '/media/ljy/ubuntu_disk1/jhy_code/resnet-for-au/face_box_info'
-        #     box_file_name = img_path.split('/')[-2]+img_path.split('/')[-1].split('.')[0]+'.txt'
-        #     box_path = os.path.join(box_dir, box_file_name)
-        #     if not os.path.exists(box_path):
-        #         print(box_path)
-        #         face_detector = FaceDetecter(net_type="mtcnn", return_type="v1")
-        #         box_info = face_detector.detect_img(img_path)  # top-left weight, height
-        #         xmin, ymin, weight, height = box_info[0], box_info[1], box_info[2], box_info[3]
-        #         xmax = xmin + weight
-        #         ymax = ymin + height
-        #         with open(box_path, 'w') as f:
-        #             f.write("{} {} {} {}".format(xmin, ymin, xmax, ymax))
-        #     else:
-        #         box_info = np.loadtxt(box_path)
-        #         if len(box_info)<4:
-        #             os.remove(box_path)
-        #             xmin, ymin, weight, height = (0, 0, img.shape[0], img.shape[1])
-        #         else:
-        #             xmin, ymin, weight, height = int(box_info[0]), int(box_info[1]), int(box_info[2]), int(box_info[3])
-        #         if self.box_transform and self.mode=="Train":
-        #             #对人脸框做数据增强
-        #             # 缩小、放大框
-        #             weight_scale, height_scale = random.uniform(0.8,1.2),random.uniform(0.8,1.2)
-        #             weight, height = int(weight_scale * weight), int(height_scale * height)
-        #             #水平移动左右10个像素
-        #             p1 = random.randint(-10, 10)
-        #             xmin = xmin + p1
-        #             #竖直移动上下10个像素
-        #             p2 = random.randint(-10, 10)
-        #             ymin = ymin + p2
-        #         xmax = xmin + weight
-        #         ymax = ymin + height
-        #         xmin = max(0, xmin)
-        #         xmax = min(img.shape[0], xmax)
-        #         ymin = max(0, ymin)
-        #         ymax = min(img.shape[1], ymax)
-        #     img = img[xmin:xmax, ymin:ymax]
-        # get label
-        # label=np.loadtxt(label_path,dtype=float)
-        #print(label)
-        # transform
+        if  abs(img.size[0] - img.size[1])>=3: 
+            print(img.size, img_path)
         label = np.array(label, dtype=np.float32)
         if self.transform:
             img= self.transform(img)

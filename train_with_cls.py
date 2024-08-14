@@ -11,9 +11,10 @@ import torchvision.transforms as transforms
 #from Dataset.transform import ToTensor,Normalize,Compose,UnNormalize,RandomCrop,RandomColorjitter,CenterCrop,Resize
 from torch.utils.data import DataLoader, ConcatDataset
 from Dataset.au_dataset import AuDataset
+from model.resnet_cls import ResNet_cls
 import numpy as np
 import torch.nn.functional as F
-from process.engine import train_one_epoch, evalutate
+from process.engine import train_one_epoch, evalutate, train_one_epoch_cls, evalutate_cls
 from PIL import Image
 import matplotlib.pyplot as plt
 #from timm import create_model
@@ -21,8 +22,10 @@ import matplotlib.pyplot as plt
 from utils.get_logger import create_logger
 from utils.cal_less_more import pred_less_and_more
 from utils.lr_scheduler import build_scheduler
-os.environ['CUDA_LAUNCH_BLOCKING'] = '2'
-os.environ['CUDA_VISIBLE_DEVICES'] = '2'
+from utils.utils import load_filtered_state_dict
+import torch.utils.model_zoo as model_zoo
+os.environ['CUDA_LAUNCH_BLOCKING'] = '3'
+os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 def get_each_au_num(loader):
     matrix = torch.zeros((6,24)).cuda()
     for  imgs, labels in loader:
@@ -123,36 +126,38 @@ def main(args):
                             shuffle=False,
                             num_workers=args.num_workers)
     #加载模型，使用预训练模型，但是最后一层重新训练
-    if args.model == 'vit':
-        model = torchvision.models.vit_b_16(num_classes=24,dropout=0.5)
-        model.heads = nn.Sequential(nn.Linear(model.hidden_dim, 24), nn.Sigmoid())
-    if args.model == 'swin':
-        model = torchvision.models.swin_t(num_classes=24, dropout=0.8)
-        model.heads = nn.Sequential(nn.Linear(model.hidden_dim, 24), nn.Sigmoid())
-    if args.model == 'resnet' or args.model=='resnet50':
-        model = torchvision.models.resnet50(pretrained=True)
-    if args.model == 'resnet18':
-        model = torchvision.models.resnet18(pretrained=True)
-    num_features = model.fc.in_features
-    model.fc = nn.Sequential(
-        nn.Dropout(0.5),
-        nn.Linear(num_features, 24), 
-        nn.Hardsigmoid()  # 使用 Sigmoid 激活函数将输出限制在0-1之间 
-        )
-
+    # if args.model == 'vit':
+    #     model = torchvision.models.vit_b_16(num_classes=24,dropout=0.5)
+    #     model.heads = nn.Sequential(nn.Linear(model.hidden_dim, 24), nn.Sigmoid())
+    # if args.model == 'swin':
+    #     model = torchvision.models.swin_t(num_classes=24, dropout=0.8)
+    #     model.heads = nn.Sequential(nn.Linear(model.hidden_dim, 24), nn.Sigmoid())
+    # if args.model == 'resnet' or args.model=='resnet50':
+    #     model = torchvision.models.resnet50(pretrained=True)
+    # if args.model == 'resnet18':
+    #     model = torchvision.models.resnet18(pretrained=True)
+    # num_features = model.fc.in_features
+    # model.fc = nn.Sequential(
+    #     nn.Dropout(0.5),
+    #     nn.Linear(num_features, 24), 
+    #     nn.Hardsigmoid()  # 使用 Sigmoid 激活函数将输出限制在0-1之间 
+    #     )
+    model = ResNet_cls(torchvision.models.resnet.Bottleneck, [3, 4, 6, 3], 10)
     model = model.cuda()
-
+    load_filtered_state_dict(model, model_zoo.load_url('https://download.pytorch.org/models/resnet50-19c8e357.pth'))
     
     optimizer = optim.Adam(model.parameters(), lr=args.lr,
                             weight_decay=args.weight_decay)
-    if args.criterion == 'mse':
-         criterion = torch.nn.MSELoss()
-    elif args.criterion == 'bce':
-        criterion = torch.nn.BCELoss()
-    elif args.criterion == 'smoothl1':
-        criterion = torch.nn.SmoothL1Loss()
-    elif args.criterion == 'l1':
-        criterion = torch.nn.L1Loss()
+    # if args.criterion == 'mse':
+    #      criterion = torch.nn.MSELoss()
+    # elif args.criterion == 'bce':
+    #     criterion = torch.nn.BCELoss()
+    # elif args.criterion == 'smoothl1':
+    #     criterion = torch.nn.SmoothL1Loss()
+    # elif args.criterion == 'l1':
+    #     criterion = torch.nn.L1Loss()
+    criterion = torch.nn.MSELoss()
+    cls_criterion = torch.nn.CrossEntropyLoss()
     #lr_scheduler=torch.optim.lr_scheduler.MultiStepLR(optimizer,milestones=args.milestone, gamma=0.1, verbose=True)
     lr_scheduler = build_scheduler(args, optimizer, len(train_loader))
     print("-----------------")
@@ -179,10 +184,10 @@ def main(args):
         
         model.train()
         loss = 0.0
-        train_loss, train_acc = train_one_epoch(train_loader,  model, optimizer, criterion, lr_scheduler, epoch, args, logger)
+        train_loss, train_acc = train_one_epoch_cls(train_loader,  model, optimizer, criterion, lr_scheduler, epoch, args, logger)
         
         if epoch >= args.epochs // 2:
-            val_loss, val_acc, val_mae,  val_pl, val_pm, pred, label, non_zero_mae = evalutate(val_loader,  model, criterion, epoch, args, logger)
+            val_loss, val_acc, val_mae,  val_pl, val_pm, pred, label, non_zero_mae = evalutate_cls(val_loader,  model, criterion, epoch, args, logger)
             pred_less_and_more(pred, label)
             #lr_scheduler.step()
             if min_val_loss >= val_loss:
@@ -234,7 +239,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--print_fq', type=int, default=20,
                         )
-    parser.add_argument('--save_path',type=str,default="checkpoint/0813_res50_mse_e100_newdata")
+    parser.add_argument('--save_path',type=str,default="checkpoint/0813_res50_mse_e100_newdata_cls")
     parser.add_argument('--log_dir',type=str,default="log/")
     parser.add_argument("--num_workers", type=int, default=32)
     #parser.add_argument("--iscrop", type=str, default="_crop")

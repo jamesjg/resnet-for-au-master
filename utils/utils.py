@@ -29,7 +29,12 @@ def adjust_learning_rate(optimizer, config,epoch, iteration, num_iter):
 
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
-
+def load_filtered_state_dict(model, snapshot):
+    # By user apaszke from discuss.pytorch.org
+    model_dict = model.state_dict()
+    snapshot = {k: v for k, v in snapshot.items() if k in model_dict}
+    model_dict.update(snapshot)
+    model.load_state_dict(model_dict)
 def save_checkpoint(state, is_best, checkpoint='checkpoint', filename='checkpoint.pth.tar'):
     filepath = os.path.join(checkpoint, filename)
     torch.save(state, filepath)
