@@ -90,7 +90,7 @@ def main(args):
     model = model.cuda()
     
     
-    model.load_state_dict(torch.load("checkpoint/0813_res18_mse_e100/best.pth"))
+    model.load_state_dict(torch.load(args.model_path))
     
     
     if args.criterion == 'mse':
@@ -110,15 +110,9 @@ if __name__ == "__main__":
     parser.add_argument('--data_path',type=str,default="/home/dingyan/huguohong/9_10/dataset/FEAFA_ALL/FEAFA_A1_align2")
     parser.add_argument('--val_json_path',type=str,default="Test_json_file.json")
     parser.add_argument('--model',type=str,default='resnet')
-    
+    parser.add_argument('--model_path',type=str,default="args.model_path")
     
     parser.add_argument('--num_class',type=int,default=24)
-    parser.add_argument('--epochs',type=int,default=20)
-    parser.add_argument('--milestone',default=[12,16])
-    parser.add_argument('--lr', type=float, default=5e-4,
-                        help='Initial learning rate.')
-    parser.add_argument('--weight_decay', type=float, default=1e-4,
-                        help='Weight decay (L2 loss on parameters).')
     parser.add_argument('--print_fq', type=int, default=20,
                         )
     parser.add_argument('--log_dir',type=str,default="log/log_val")
