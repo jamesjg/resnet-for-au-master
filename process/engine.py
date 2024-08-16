@@ -447,7 +447,7 @@ def evalutate_cls(val_loader, model, criterion, epoch, args, logger):
         return loss.avg, acc.avg, mae.avg, pl.sum, pm.sum, pred, label, non_zero_mae.avg
 
 
-def inference(data_loader, model, epoch, args, logger):
+def inference(imgs, model, args, logger):
     batch_time = AverageMeter()  #一个batch中模型运行时间
     data_time = AverageMeter()  #一个batch中加载数据时间
     batch_start_time = time.time()
@@ -456,16 +456,16 @@ def inference(data_loader, model, epoch, args, logger):
     au_preds = []
     #img_names = []
     with torch.no_grad():
-        for idx, imgs in enumerate(data_loader):
-            if epoch == 0 and idx <= 10 :
-                ori_imgs=UnNormalize(mean =[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])(imgs)
-                torchvision.utils.save_image(ori_imgs,'images/inference_image_{:}.jpg'.format(idx),normalize=True)
-            imgs = imgs.cuda()
-            bs = imgs.shape[0]
-            data_time.update(time.time() - batch_start_time)
-            output = model(imgs)
+        for batch_idx in range(0, len(imgs), args.batch_size):
+            
+            batch_imgs = imgs[batch_idx:batch_idx + args.batch_size]
+            batch_imgs = torch.from_numpy(np.stack(batch_imgs)).cuda()
+            if batch_idx == 0:
+                ori_imgs = UnNormalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])(batch_imgs)
+                torchvision.utils.save_image(ori_imgs[0],'images/inference_image_{:}.jpg'.format(batch_idx),normalize=True)
+            output = model(batch_imgs)
             au_preds.append(output.cpu().numpy())
-            #img_names.append(img_names)
+    
             
             batch_time.update(time.time() - batch_start_time)
             batch_start_time = time.time()
@@ -473,15 +473,11 @@ def inference(data_loader, model, epoch, args, logger):
             
 #           icc.update(icc_value.mean(), bs)
             # global_steps = writer_dict['train_global_steps']
-            if idx % args.print_fq == 0 or idx + 1 == len(data_loader):
-                msg = 'Epoch: [{0}][{1}/{2}]\t' \
-                      'Time {batch_time.val:.3f}s ({batch_time.avg:.3f}s)\t' \
-                      'Speed {speed:.1f} samples/s\t' \
+            if batch_idx % args.print_fq == 0 :
+                msg = 'Time {batch_time.val:.3f}s ({batch_time.avg:.3f}s)\t' \
                       'Data {data_time.val:.3f}s ({data_time.avg:.3f}s)\t' \
                        .format (
-                    epoch, idx, len (data_loader), batch_time=batch_time,
-                    speed=bs / batch_time.val,
-                    data_time=data_time)
+                   batch_time=batch_time, data_time=data_time)
                 logger.info (msg)
 
         au_preds = np.concatenate(au_preds)

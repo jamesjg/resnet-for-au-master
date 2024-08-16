@@ -4,3 +4,6 @@ __pycache__/
 *.pth
 *.txt
 *.dat
+*.npy
+results/
+affect_label/
