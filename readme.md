@@ -42,7 +42,7 @@ The train json file and validation json file contain the image names and their c
 ```json
 [
     {
-        "file_name": "image1.jpg", "au":[0,0,...,0]
+        "file_name": "image1.jpg", "au":[0,0,0,0,0,0]
         },
     
 ]
