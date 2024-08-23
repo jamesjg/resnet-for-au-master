@@ -103,5 +103,5 @@ This project is related to the [SCRFD](https://github.com/deepinsight/insightfac
 
 ## 4. Final Model
 
-We trained a Resnet-50  AU regression model on the FEAFA dataset (AUs in 0-1 float) and achieved an average AU mae of 0.00340. The trained model can be downloaded from [Baidu]() or [Google Drive]().
+We trained a Resnet-50  AU regression model on the FEAFA dataset (AUs in 0-1 float) and achieved an average AU mae of 0.00340. The trained model can be downloaded from [Baidu](https://pan.baidu.com/s/1ArezzUWArZ3-u2TdUPQG3A?pwd=x6f5)(password:x6f5) or [Google Drive]().
 
