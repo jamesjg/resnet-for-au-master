@@ -2,8 +2,10 @@ images/
 checkpoint
 __pycache__/
 *.pth
-*.txt
 *.dat
 *.npy
 results/
 affect_label/
+data/
+log/
+*.json

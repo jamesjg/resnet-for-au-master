@@ -149,8 +149,8 @@ if __name__ == "__main__":
     parser.add_argument('--data_path',type=str,default="/home/dingyan/huguohong/9_10/dataset/Expression/AffectNet-kaggle")
     parser.add_argument('--bbox_txt_path',type=str,default="raf_bbox.txt")
     parser.add_argument('--dataset',type=str,default="affect")
-    parser.add_argument('--result_json_path',type=str,default="result/Affectnet_kaggle_valid-sample-affectnet.json")
-    parser.add_argument('--label_json_path',type=str,default="affect_label/Affectnet_kaggle_valid-sample-affectnet.json")
+    parser.add_argument('--result_json_path',type=str,default="result/Affectnet_kaggle_train-sample-affectnet.json")
+    parser.add_argument('--label_json_path',type=str,default="affect_label/Affectnet_kaggle_train-sample-affectnet.json")
     
     
     parser.add_argument('--log_dir',type=str,default="log/log_inference_affect")

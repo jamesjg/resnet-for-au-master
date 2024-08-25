@@ -9,7 +9,7 @@ To get started, clone the repository and install the required dependencies:
 ```bash
 git clone https://github.com/jamesjg/resnet-for-au-master.git
 
-conda env create -n resnet-for-au python=3.8
+conda create -n resnet-for-au python=3.8
 conda activate resnet-for-au
 
 cd resnet-for-au-master
@@ -56,10 +56,7 @@ python train.py --data_path <path_to_dataset> --train_json_path <path_to_train_j
 
 ### 2.2 Testing
 
-To test the model, you need to provide the paths to the dataset, val json file, and the trained model.
-
-
-To test the model, run the following command:
+To test the model, you need to provide the paths to the dataset, val json file, and the trained model. Then,  run the following command:
 
 ```bash
 python test.py --data_path <path_to_dataset> --val_json_path <path_to_val_json> --model_path <path_to_trained_model>
